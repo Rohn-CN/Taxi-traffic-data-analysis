@@ -1,0 +1,8 @@
+北京市出租车GPS轨迹数据
+
+内容：北京市部分出租车1天的GPS轨迹数据
+
+数据来源：微软亚洲研究院
+
+数据格式：
+taxi id, date time, longitude, latitude
