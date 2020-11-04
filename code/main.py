@@ -10,3 +10,4 @@ class TaxiTrack(object):
         self.id=id
         self.date=int(date.split('-')[2])
         self.time=
+ada
