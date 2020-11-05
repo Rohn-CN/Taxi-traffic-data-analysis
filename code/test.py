@@ -51,10 +51,14 @@ def process(file):
 
     # 误差数据和停车数据删除，给出move_car数据
     move_car = pd.DataFrame(taxi[(taxi.speed < 200) & (taxi.speed != 0)])
-
-    # 给出jam_car，move_car和jam_car两个不重叠，其并集是剔除误差数据的数据总和
     jam_car = pd.DataFrame(taxi[taxi.speed == 0])
+
+    # 绘制movecar和jamcar
     draw_jam_and_move(move_car,jam_car)
+
+    #给出超速数据
+    overspeed_car=pd.DataFrame(taxi[taxi.speed>80])
+    
 
 
 
