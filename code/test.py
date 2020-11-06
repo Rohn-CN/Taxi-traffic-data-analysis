@@ -31,6 +31,7 @@ def batch(folder_path):
 
 
 def process(file):
+    global speed_list
     taxi = pd.read_csv(file, sep=',', names=['id', 'time', 'lng', 'lat'])
     taxi.drop_duplicates("time", inplace=True)  # 删除time相同的元素
 
@@ -58,20 +59,33 @@ def process(file):
     move_car = pd.DataFrame(taxi[(taxi.speed <= 200) & (taxi.speed != 0)])
     jam_car = pd.DataFrame(taxi[taxi.speed == 0])
     overspeed_car=pd.DataFrame(move_car[move_car.speed>80])
+    action_car = pd.DataFrame(taxi[taxi.speed<=200])
+    speed_list=speed_list+list(action_car.speed)
     # 绘制movecar和jamcar
     draw_jam_and_move(move_car, jam_car)
     draw_speed(taxi)
-    draw_overspeed(taxi)
+    draw_overspeed(overspeed_car)
+
+    #计算车的运行时间和堵车时间
+    return taxi
+
+def count_jam_time(taxi):
+    global jam_time,whole_time
+    for idx,row in taxi.iterrows():
+        if row.newstart ==0 :
+            whole_time +=row.dt
+            if row.speed == 0:
+                jam_time+=row.dt
 
 
 def draw_speed(taxi):
     color_base = (50, 100, 150)
     k = 155/3/120
-    for idx, row in taxi.iterrows():
-        if row.speed >= 0 and row.speed <= 200:
-            # 删除五成点
-            if random.random() > 0.5:
-                c = (int(30+k*(row.speed-80)), int(60+2*k *
+    for idx, row in taxi.iterrows():    
+        if row.speed >= 0 and row.speed <= 200: 
+            # 删除五成点    
+            if random.random() > 0.5:   
+                c = (int(30+k*(row.speed-80)), int(60+2*k * 
                                                    (row.speed-80)), int(90+3*k*(row.speed-80)))
                 color16 = RGB2Hex(c)
                 folium.Circle(
@@ -110,6 +124,19 @@ def draw_jam_and_move(move_car, jam_car):
                 color="#E0542E"
             ).add_to(jam_move)
 
+def speed_hist(speed_list):
+    plt.subplot(1,2,1)
+    plt.xlabel('Speed')
+    plt.ylabel('Probability')
+    plt.hist(speed_list,bins=20)
+
+    move_list=[x for x in speed_list if x!=0]
+    plt.subplots(1,2,2)
+    plt.xlabel('Speed')
+    plt.ylabel('Probability')
+    plt.hist(move_list,bins=20)
+
+    plt.savefig('fig.png')
 
 
 if __name__ == "__main__":
@@ -117,6 +144,8 @@ if __name__ == "__main__":
     jam_move = folium.Map(location=[39.90732, 116.45353])
     velocity_tapering = folium.Map(location=[39.90732, 116.45353])
     overspeed = folium.Map(location=[39.90732, 116.45353])
+    speed_list=list()
+    whole_count,jam_count =0,0
     batch(folder)
     jam_move.save("jam_move.html")
     print("1")
@@ -124,3 +153,4 @@ if __name__ == "__main__":
     print("2")
     overspeed.save("overspeed.html")
     print("3")
+    speed_hist(speed_list)
