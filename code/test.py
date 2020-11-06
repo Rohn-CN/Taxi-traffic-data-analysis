@@ -9,14 +9,17 @@ import folium
 from folium.features import ColorLine
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 def RGB2Hex(rgb):
-    R,G,B=rgb
-    c="#"
-    r16 = str(hex(R))[-2:].replace('x','0').upper()
+    R, G, B = rgb
+    c = "#"
+    r16 = str(hex(R))[-2:].replace('x', '0').upper()
     g16 = str(hex(G))[-2:].replace('x', '0').upper()
     b16 = str(hex(B))[-2:].replace('x', '0').upper()
     return c+r16+g16+b16
+
 
 def batch(folder_path):
     r = re.compile('[0-9]*.txt')
@@ -25,7 +28,6 @@ def batch(folder_path):
         if re.match(r, file):
             process(os.path.join(folder_path, file))
             print("finish:", file)
-
 
 
 def process(file):
@@ -55,45 +57,39 @@ def process(file):
     # 误差数据和停车数据删除，给出move_car数据
     move_car = pd.DataFrame(taxi[(taxi.speed <= 200) & (taxi.speed != 0)])
     jam_car = pd.DataFrame(taxi[taxi.speed == 0])
-
+    overspeed_car=pd.DataFrame(move_car[move_car.speed>80])
     # 绘制movecar和jamcar
     draw_jam_and_move(move_car, jam_car)
-<<<<<<< HEAD
     draw_speed(taxi)
     draw_overspeed(taxi)
 
 
-
 def draw_speed(taxi):
-    color_base=(50,100,150)
-    k=155/3/120
+    color_base = (50, 100, 150)
+    k = 155/3/120
     for idx, row in taxi.iterrows():
         if row.speed >= 0 and row.speed <= 200:
             # 删除五成点
             if random.random() > 0.5:
-                c=(int(30+k*(row.speed-80)),int(60+2*k*(row.speed-80)),int(90+3*k*(row.speed-80)))
-                color16=RGB2Hex(c)
+                c = (int(30+k*(row.speed-80)), int(60+2*k *
+                                                   (row.speed-80)), int(90+3*k*(row.speed-80)))
+                color16 = RGB2Hex(c)
                 folium.Circle(
                     radius=15,
                     location=[row.lat, row.lng],
                     color=color16
                 ).add_to(velocity_tapering)
 
-def draw_overspeed(taxi):
-    k=(255-100)/(200-80)
-    b=155-200*k
-    for idx,row in taxi.iterrows():
-        if row.speed>80 and row.speed<200:
-            c=(int(row.speed*k+b)+100,100,0)
-
-            color16=RGB2Hex(c)
-            folium.Circle(radius=15,
-                          location=[row.lat,row.lng],
-                          color =color16
-
-
-
-
+def draw_overspeed(overspeed_car):
+    k = (255-100)/(200-80)
+    b = 155-200*k
+    for idx,row in overspeed_car.iterrows():
+        c = (int(row.speed*k+b)+100, 100, 0)
+        color16 = RGB2Hex(c)
+        folium.Circle(radius=15,
+                        location=[row.lat, row.lng],
+                        color=color16
+                        ).add_to(overspeed)
 
 
 def draw_jam_and_move(move_car, jam_car):
@@ -115,11 +111,12 @@ def draw_jam_and_move(move_car, jam_car):
             ).add_to(jam_move)
 
 
+
 if __name__ == "__main__":
     folder = '../Taxi'
     jam_move = folium.Map(location=[39.90732, 116.45353])
     velocity_tapering = folium.Map(location=[39.90732, 116.45353])
-    overspeed=folium.Map(location=[39.90732, 116.45353])
+    overspeed = folium.Map(location=[39.90732, 116.45353])
     batch(folder)
     jam_move.save("jam_move.html")
     print("1")
@@ -127,5 +124,3 @@ if __name__ == "__main__":
     print("2")
     overspeed.save("overspeed.html")
     print("3")
-
-
