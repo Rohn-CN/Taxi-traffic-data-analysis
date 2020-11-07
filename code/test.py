@@ -65,28 +65,29 @@ def process(file):
     draw_jam_and_move(move_car, jam_car)
     draw_speed(taxi)
     draw_overspeed(overspeed_car)
-
+    count_jam_time(taxi)
     #计算车的运行时间和堵车时间
     return taxi
 
 def count_jam_time(taxi):
-    global jam_time,whole_time
-    for idx,row in taxi.iterrows():
-        if row.newstart ==0 :
-            whole_time +=row.dt
-            if row.speed == 0:
-                jam_time+=row.dt
+    global jam_time,whole_time,overspeed_time,rest_time
+    rest_time.append((sum(taxi[taxi.newstart==1].dt)))
+    whole_time.append(sum(taxi[taxi.speed <= 200 ].dt))
+    jam_time.append(sum(taxi[taxi.speed == 0].dt))
+    overspeed_time.append(sum((taxi[(taxi.speed>80) & (taxi.speed<=200)].dt)))
+
+
 
 
 def draw_speed(taxi):
     color_base = (50, 100, 150)
-    k = 155/3/120
+    k = 155/3/120/2
     for idx, row in taxi.iterrows():    
         if row.speed >= 0 and row.speed <= 200: 
             # 删除五成点    
-            if random.random() > 0.5:   
-                c = (int(30+k*(row.speed-80)), int(60+2*k * 
-                                                   (row.speed-80)), int(90+3*k*(row.speed-80)))
+            if random.random() > 0.7:
+                c = (int(0+k*(row.speed-80)), int(100+2*k *
+                                                   (row.speed-80)), int(150+3*k*(row.speed-80)))
                 color16 = RGB2Hex(c)
                 folium.Circle(
                     radius=15,
@@ -98,7 +99,7 @@ def draw_overspeed(overspeed_car):
     k = (255-100)/(200-80)
     b = 155-200*k
     for idx,row in overspeed_car.iterrows():
-        c = (int(row.speed*k+b)+100, 100, 0)
+        c = (int(row.speed*k+b)+100, 0, 0)
         color16 = RGB2Hex(c)
         folium.Circle(radius=15,
                         location=[row.lat, row.lng],
@@ -113,44 +114,49 @@ def draw_jam_and_move(move_car, jam_car):
             folium.Circle(
                 radius=15,
                 location=[row.lat, row.lng],
-                color="#4D7186"
-            ).add_to(jam_move)
-
-    for idx, row in jam_car.iterrows():
-        if random.random() > 0.3:
-            folium.Circle(
-                radius=15,
-                location=[row.lat, row.lng],
                 color="#E0542E"
             ).add_to(jam_move)
 
+    for idx, row in jam_car.iterrows():
+        if random.random() > 0.55:
+            folium.Circle(
+                radius=15,
+                location=[row.lat, row.lng],
+                color="#4D7186"
+            ).add_to(jam_move)
+
 def speed_hist(speed_list):
-    plt.subplot(1,2,1)
+    plt.subplot(2,1,1)
     plt.xlabel('Speed')
     plt.ylabel('Probability')
     plt.hist(speed_list,bins=20)
 
-    move_list=[x for x in speed_list if x!=0]
-    plt.subplots(1,2,2)
+    move_list=[x for x in speed_list if x>5]
+    plt.subplot(2,1,2)
     plt.xlabel('Speed')
     plt.ylabel('Probability')
     plt.hist(move_list,bins=20)
 
-    plt.savefig('fig.png')
+    plt.savefig(os.path.join(savefile,'fig.png'))
 
 
 if __name__ == "__main__":
     folder = '../Taxi'
+    savefile=r"G:\3result"
     jam_move = folium.Map(location=[39.90732, 116.45353])
     velocity_tapering = folium.Map(location=[39.90732, 116.45353])
     overspeed = folium.Map(location=[39.90732, 116.45353])
     speed_list=list()
-    whole_count,jam_count =0,0
+    rest_time,whole_time,jam_time,overspeed_time =list(),list(),list(),list()
     batch(folder)
-    jam_move.save("jam_move.html")
+    jam_move.save(os.path.join(savefile,"jam_move.html"))
     print("1")
-    velocity_tapering.save("velocity.html")
+    velocity_tapering.save(os.path.join(savefile,"velocity.html"))
     print("2")
-    overspeed.save("overspeed.html")
+    overspeed.save(os.path.join(savefile,"overspeed.html"))
     print("3")
     speed_hist(speed_list)
+    print(whole_time)
+    print(jam_time)
+    print(overspeed_time)
+    print(rest_time)
